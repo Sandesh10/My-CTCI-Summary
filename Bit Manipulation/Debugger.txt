@@ -1,0 +1,6 @@
+(n & (n-1)==0)
+
+if A & B ==0
+ -> A and B never have a 1 bit in the same place. So, if (n & (n-1) ==0) then n and n-1 never share a 1.
+
+ (n & (n-1)==0) checks if n is the power of 2 (or if n is 0)
