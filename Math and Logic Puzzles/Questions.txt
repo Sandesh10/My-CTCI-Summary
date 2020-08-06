@@ -1,0 +1,17 @@
+6.1 The Heavy Pill: 
+You have 20 bottles of pills. 19 bottles have 1.0 gram pills,
+ but one has pills of weight 1.1 grams. Given a scale that 
+ provides an exact measurement, how would you find the heavy bottle?
+ You can only use the scale once.
+
+Approach:
+Take one pill from bottle #1, two pills from Bottle #2, three pills from Bottle #3
+and so on. If all pills were 1 gm, total weight would be (1+2+3+....+20) = 20*21/2 = 210
+This formula will tell you bottle number:
+		          weight - 210 gram
+	Bottle # =    ------------------
+		             0.1 gram
+Eg: if weight = 211.3 gm, then bottle no is 13.
+
+
+
