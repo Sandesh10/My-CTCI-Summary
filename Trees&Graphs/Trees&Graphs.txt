@@ -1,0 +1,168 @@
+Trees:
+- A tree is a data structure composed of nodes. 
+- A tree cannot contain cycles.
+
+class Node {
+	public String name;
+	public Node[] children;
+}
+
+Binary Tree: tree in which each node has upto two children.
+
+Binary Search Tree: binary tree in which every nodes fits a specific ordering property. left sub-tree < root < right sub-tree
+
+Balanced tree ensure O(log n) times for insert and find. Eg: Red-black tree and AVL tree.
+
+Complete Binary Tree:
+Binary tree in which every level of the tree is fully filled, except for perhaps the last level.
+
+      10                 10 
+     /  \               /   \
+    5    20            5     20
+   / \   /            / \      \ 
+  3  7  15           3   7      30
+
+  (Complete)      (Not a complete Tree)
+
+
+ Full Binary Tree:
+Binary tree in which every node has either zero or two children.i.e. no nodes have only one child.
+
+not a full binary       a full binary tree
+      10                      10 
+     /  \                    /   \
+    5    20                 5     20
+   / \   /                       /   \      
+  3  7  15                      30    18
+
+
+  Perfect Binary Tree:
+  Tree that is both full and complete.
+  - Perfect tree must have exactly 2^k -1 nodes, where k = no. of levels.
+
+----------------------------------------------
+  BINARY TREE TRAVERSAL
+
+  In-order : left, node, right
+  ---------
+  void inOrderTraversal(TreeNode node) {
+      if (node!=null){
+      	inOrderTraversal(node.left);
+      	visit(node);
+      	inOrderTraversal(node.right);
+      }			
+  }
+
+  Pre-Order : root, left, right
+  ---------
+  void preOrderTraversal(TreeNode node){
+  	  if (node!=null){
+  	  	visit(node);
+  	  	preOrderTraversal(node.left);
+  	  	preOrderTraversal(node.right);
+  	  }
+  }
+
+  Post-Order : left, right, root
+  ----------
+  void preOrderTraversal(TreeNode node){
+  	  if (node!=null){
+  	  	preOrderTraversal(node.left);
+  	  	preOrderTraversal(node.right);
+  	  	visit(node);
+  	  }
+  }    
+----------------------------------------------
+BINARY HEAPS (Min-Heap)
+- A min-heap is a complete binary tree where root is the minimum element in the tree.
+
+- OPERATIONS: 
+  insert and extract-min.
+
+INSERT: 
+- start by inserting the element at the bottom. We insert at the rightmost spot so as to maintain the complete tree.
+- Then we "fix" the tree by swapping new element with its parent until we find appropriate spot. 
+- Time: O(log n), where n is the number of nodes in the heap.
+
+EXTRACT MINIMUM ELEMENT:
+- remove the root element and replace it with the last element in the heap(bottommost right element).
+- Then bubble down this element until min heap is restored.
+- Time: O(log n)
+
+----------------------------------------------
+TRIES (Prefix Trees)
+- varient of n-ary tree in which characters are stored at each node. Each path down the tree may represent a word.
+- * node (called null node) at the leaf are often used to indicate complete words.
+- USE:
+  > Trie is used to store the entire language for quick prefix lookups. While a hash table can quickly look up whether a string is a valid word, it cannot tell us if a string is a prefix of any valid words. A trie can do this verys quickly.
+
+  > Time complexity to check a valid prefix: O(k), where k is the length of the sting.
+
+  > Many problem which involves lists of valid words leverage a trie as an optimization. 
+  * Example: 
+  looking up M, then MA then MAN then MANY, we might pass around a reference to the current node in the tree. This will allow us to just check if Y is a child of MAN, rather than starting from the root each time.
+
+  ======================================================================================
+
+  GRAPH:
+  - Graph is a collection of nodes with edges between them.
+  - Tree is a connected graph without cycles.
+
+Graph Representation:
+
+- ADJACENCY LIST: 
+  Every vertex stores a list of adjacent vertices.
+
+  class Graph{
+  	public Node[] nodes;
+  }
+
+  class Node {
+  	public String name;
+  	public Node[] children;
+  }
+
+ - ADJACENCY MATRIX:
+   n*n boolean/integer matrix.
+
+------------------------------------------
+GRAPH SEARCH:
+
+* DFS: preferred if we want to visit every node in the graph.
+
+Pseudocode:
+ void DFS(Node root){
+ 	if(root==null) return;
+ 	visit(node);
+ 	root.visited = true;
+ 	for each (Node n in root.adjacent){
+ 		if (n.visited==false)
+ 			search(n);
+ 	}
+ }
+
+* BFS: used to find the shortest path (or just any path)
+=> Always make sure to use the queue in BFS
+
+Pseudocode:
+void BFS(Node root){
+	Queue queue = new Queue();
+	root.marked = true;
+	queue.enqueue(root);
+
+	while(!queue.isEmpty()){
+		Node n= queue.dequeue();
+		visit(n);
+		foreach(Node r in n.adjacent){
+			if (r.marked==false){
+				r.marked = true;
+				queue.enqueue(r);
+			}
+		}
+	}
+}
+
+
+Bidirectional Search:
+- BFS from start and end node.
+- Faster by a factor of (k^(d/2)) where k is breadth of the graph and d is depth.

@@ -1,0 +1,53 @@
+Personal Financial Manager
+
+Explain how would you design a personal financial manager (like Mint.com). This system would connect to your bank accounts, analyze your spending habits and make recommendation.
+
+Step 1: Scope the Problem
+- create an account and add your bank accounts. You can add multiple accounts.
+- It pulls in all your financial history, or as much of it as your bank will allow.
+- This financial history includes outgoing money, incoming money and your current money.
+- Each payment transactuon has a "category" associated with it.
+- Users will use the system to get recommendations on their spending. 
+- We probably want email notifications either on a regular basis, or on certain conditions(spending over a certain threshold)
+- We'll assume that there's no concept of user-specified rules for assigning categories to transactions.
+
+
+Step 2: Make Reasonable Assumptions:
+- Adding or removing bank accounts is relatively unusual.
+- This system is write-heavy. A typical user may make several new transactions daily, although few users would access the website more than once a week.
+- Once a transaction is assigned to a category, it will only be changed if the user asks to change it.
+- The banks probably won't push data into our system. Instead, we'll need to pull data from the banks.
+- Alerts on users exceeding budgets probably do not need to be sent instantaneously. Probably upto 24 hours delay.
+
+Step 3: Draw the Major Components
+		
+		bank data
+		synchronizer
+		   |
+		  \|/
+		raw transaction --> categorizer
+			data  				|
+								|
+		frontend  <--->   categorized 	
+			|		      transactions
+			|		            |
+			|		            |	
+		budget data <---- budget analyzer
+
+Once new data arrives, it is stored in some list of raw, unrpocessed transactions. This data is then pushed to the categorizer, which assigns each transaction to a category and stores these categorized transactions in another datasource.
+The budget analyzer pulls in the categorized transactions, updates each user's budget per category, and stores the user's budget.
+
+Step 4: Identify the Key Issues
+We should now reflect on what the major issues here might be.
+- Data heavy system. So, we want to be responsive- as much processing as possible to be asynchronous.
+- We will certainly want at least one task queue, where we can queue up work that needs to be done. This work will include tasks such as pulling in new bank data, re-analyzing budgets
+
+
+It may be better instead to just store the transactions to a set of text files. We assumed earlier that the categorizations are based on the seller's name alone. If we group the transaction files by seller's name, we can take advantage of the duplicates.
+  raw transaction  ----> categorized data, 
+  grouped by seller      grouped by user
+  							|
+  							|
+  						merge and group by user and category
+  							|
+  						update budgets

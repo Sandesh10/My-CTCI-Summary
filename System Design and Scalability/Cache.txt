@@ -1,0 +1,123 @@
+Cache:
+
+Design a caching mechanism to cache the results of the most recent queries. Be sure to explain how you would update the cache when data changes.
+
+Solution:
+
+Assumptions:
+- other than calling out to processSearch as necessary, all query processing happens on the initial machine that was called.
+- The number of queries we wish to cache is large (millions).
+- Calling between machine is relatively quick.
+- The result for a given query is an ordered list of URLs, each of which has an associated 50 character title and 200 character summary.
+- The most popular queries are extremely popular, such that they would always appear in the cache.
+
+System Requirements:
+- effecient lookups given a key.
+- expiration of old data so that it can be replaced with new data.
+
+In addition, we must also handle updating or clearing the cache when the results for a query change. Because some queries are very common and may permanently reside in the cache, we cannot just wait for the cache to naturally expire.
+
+Step 1: Design a Cache for a Single System
+- A linked list would allow easy purging of old data, by moving "fresh" items to the front. We could implement it to remove the last element of the linked list when the list exceeds a certain size.
+
+- A hash table allows efficient lookups of data, but it wouldn't ordinarily allow easy data purging.
+
+*******Combining linkedlist and hash table:****
+Create a linked list where a node is moved to the front every time it's accessed. This way, the end of the linked list will always contain the stalest information.
+In addition, we have a hash table that maps from a query to the corresponding node in the linked list. This allows us to not only efficiently return the cached results, but also to move the appropriate node to the front of the list thereby updating its "freshness".
+
+public class Cache {
+	public static int MAX_SIZE = 10;
+	public Node head, tail;
+	public HashMap<String, Node> map;
+	public int size = 0;
+
+	public Cache() {
+		map = new HashMap<String, Node>();
+	}
+
+	public void moveToFront(Node node){}
+	public void moveToFront(Node node){}
+
+	public void removeFromLinkedList(Node node) {}
+
+	 //Gets result from cache, and updates linked list
+	 public String[] getResults(String query) {
+	 	if (!map.containsKey(query)) return null;
+
+	 	Node node = map.get(query);
+	 	moveToFront(node);  // update freshness
+	 	return node.results;
+	 }
+
+	 /*Insert results into linked list and hash*/
+	 public void insertResults(String query, String[] results) {
+	 if (map.containsKey(query)) {
+	 	Node node = map.get(query);
+	 	node.results = results;
+	 	moveToFront(node);
+	 	return;
+	 }
+
+	 Node node = new Node(query, results);
+	 moveToFront(node);
+	 map.put(query, node);
+
+	 if (size > MAX_SIZE) {
+	 	map.remove(tail.query);
+	 	removeFromLinkedList(tail);
+	 }
+	 } 
+}
+
+Step 2: Expand to Many Machines
+"There is no guarantee that a particular query will be constantly sent to the same machine"
+
+Option 1: Each machine has its own cache
+A simple option is to give each machine its own cache. This means that if "foo" is sent to machine 1 twice in a short amount of time, the result would be recalled from the cache on the second time. Butt if "foo" is sent first to machine 1 and then to machine 2, it would be treated as a totally fresh query both times.
+
+Advantage: since no machine-to-machine calls are used, its relatively quick.
+Disadvantage: less effective as an optimization tool as many repeat queries would be treated as fresh queries.
+
+
+Option 2: Each machine has a copy of the cache
+We could give each machine a complete copy of the cache. When new items are added to the cache, they are sent to all machines. The entire data structures- linkedlist and hash table- would be duplicated.
+
+Drawback: Updating the cache means firing off data to N different machines where N is the size of the response cluster. Additionally, because each item effectively takes up N times as much space, our cache would hold much less data.
+
+Option 3: Each machine stores a segment of the cache.
+Divide up the cache, such that each machine holds a different part of it. Then, when machine i needs to look up the results for query, machine i would figure out which machine holds this value, and then ask this other machine to look up the query in j's cache.
+
+How would machine i know which machine holds this part of the hash table?
+One option is to assign queries based on the formula hash(query)%N. Then, machine i only needs to apply this formula to know that machine j should store the results for this query.
+
+So, when a new query comes in to machine i, this machine would apply the formula and call out the machine j. Machine j would then return the value from its cache or call processSearch(query) to get the results. Machine j would update its cache and return the results back to i.
+
+Alternatively, you could design the system such that machine j just return null if it doesn't have the query in its current cache. This would require machine i to call processSearch and then forward the results to machine j for storage. This implementation actually increases the number of machine-to-machine calls, with few advantages.
+
+Step 3: Updating results when contents change:
+This mechanism allow cached results to be refreshed, either periodically or on-demand.
+
+When results would change?
+- the content at a URL changes
+- The ordering of results change in response to the rank of a page changing.
+- New pages appear related to a particular query.
+
+To handle situations #1 and #2, we could create a separate hash table that would tell us which cache queries are tied to a specific URL. This could be handled completely separately from the other caches, and reside on different machines. However, this solution may require a lot of data.
+
+Alternatively, if the data doesn't require instant refreshing (which it probably doesn't), we could periodically crawl through the cache stored on each machine to purge queries tied to the updated URLs.
+
+Situation #3 is substantially more difficult to handle. We could update single word queries by parsing the content at the new URL and purging these one-word queries from the caches. But, this will only handle the one-word queries.
+
+A good way to handle situation #3 on the cache. That is, we'd impose a time out where no query, regardless of how popular it is, can sit in the cache for more than x minutes. This will ensure that all data is periodically refreshed.
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,138 @@
+SOCIAL NETWORK 
+
+How would you design the data structures for a very large social network like
+Facebook or Linkedln? Describe how you would design an algorithm to show the shortest path
+between two people (e.g., Me -> Bob -> Susan -> Jason -> You).
+
+Solution:
+
+Step 1: Simplify the problem - Forget about the millions of users
+
+We construct a graph by treating each person as a node and letting an edge between two nodes indicate the two users are friends.
+If I wanted to find the path between two people, I could start with one person and do a simple breadth-first search (BFS).
+
+WHY NOT DFS? 
+- coz it will just find a path and not necessarily the shortest path.
+- inefficient as it may keep searching millions of nodes even if users may be one degree apart.
+
+ALTERNATIVE: Bidirectional BFS
+
+IMPLEMENTATION:
+
+LinkedList<Person> findPathBiBFS(HashMap<Integer, Person> person, int source, int destination)
+{
+	// BFSData hold data we need to find
+	BFSData sourceData = new BFSData(people.get(source));
+	BFSData destData = new BFSData(people.get(destination));
+
+	while(!sourceData.isFinished() && !destData.isFinished()){
+		// search from source
+		Person collision = searchLevel(people, sourceData, destData);
+		if (collision != null) {
+			return mergePaths(sourceData, destData, collision.getID());
+		}
+
+		// search from destination
+		collision = searchLevel(people, sourceData, destData);
+		if (collision != null) {
+			return mergePaths(sourceData, destData, collision.getID());
+	}
+	return null;
+}
+
+Person searchLevel(HashMap<Integer, Person> person, BFSData primary, BFSData secondary)
+{
+	/*
+	we only want to search one level at a time. Count how many nodes are currently in the primary's level and only do that many nodes. We'll continue to add nodes to the end */
+	int count = primary.toVisit.size();
+	for(int i=0;i<count;i++){
+		PathNode pathNode = primary.toVisit.poll();
+		int personId = pathNode.getPerson().getID();
+
+		/* Check if it's already been visited. */
+		if (secondary.visited.containsKey(personId)) {
+			return pathNode.getPerson();
+		}
+
+		// Add friends to queue
+		Person person = pathNode.getPerson();
+		ArrayList<Integer> friends = person.getFriends();
+		for (int friendId: friends) {
+			if (!primary.visited.containsKey(friendId)) {
+				Person friend = people.get(friendId);
+				PathNode next = new PathNode(friend, pathNode);
+				primary.visited.put(friendId, next);
+				primary.toVisit.add(next);
+			}
+		}
+	}
+	return null;
+}
+
+// Merge paths where searches met at connection
+
+LinkedList<Person> mergePaths(BFSData bfs1, BFSData bfs2, int connection) {
+	PathNode end1 = bfs1.visited.get(connection); // end1 -> source
+	PathNode end2 = bfs2.visited.get(connection); // end2 -> dest
+
+	LinkedList<Person> pathOne = end1.collapse(false);
+}
+
+class PathNode {
+	private Person person = null;
+	private PathNode previousNode = null;
+	public PathNode(Person p, PathNode previous){
+		person = p;
+		previousNode = previous;
+	}
+
+	public Person getPerson() {return person; }
+}
+
+class PFSData {
+	public Queue<PathNode> toVisit = new LinkedList<PathNode>();
+	public HashMap<Integer, PathNode> visited = new HashMap<Integer, PathNode>();
+
+	public BFSData(Person root) {
+	PathNode sourcePath = new PathNode(root, null);
+	toVisit.add(sourcePath);
+	visited.put(root.getID(), sourcePath);
+	}
+}
+
+Suppose every person has k friends, and node S and node D have a friend C in common.
+- Traditional breadth-first search from S to D. We go through roughly k+k*k nodes: each of S's k friends and then each of their k friends.
+- Bidirectional BFS: We go through 2k nodes each of S's k friends and each of D's k friends.
+
+A bidirectional BFS will generally be faster than the traditional BFS. However, it requires actually having access to both the source node and the destination nodes, which is not always the case.
+
+
+Step 2: Handle the Millions of Users
+
+We define a class server which holds a list of all the machines, and a class Machine which represents a single machine. 
+
+class Server {
+	HashMap<Integer, Machine> machines = new HashMap<Integer, Machine>();
+	HashMap<Integer, Integer> personToMachineMap = new HashMap<Integer, Integer>();
+}
+
+class Person {
+	private ArrayList<Integer> friends = new ArrayList<Integer>();
+	private int personID;
+	private String info;
+}
+
+OPTIMIZATION:
+
+Reduce machine jumps
+- jumping from one machine to another is expensive. Instead of randomly jumping from machine to machine with each friend, try to batch these jumps - e.g: if five of my friends live on one machine, I should look them up all at once.
+
+Smart division of people and machines
+- People are much more likely to be friends with people who live in the same country as they do. Rather than randomly dividing people across machines, try to divide them by country, city, state, and so on. This will reduce the number of jumps.
+
+
+Question:
+Breadth-first search usually requires "marking" a node as visited. How do you do that in
+this case?
+Usually, in BFS, we mark a node as visited by setting a visited flag in its node class. Here, we don't want to do that. There could be multiple searches going on at the same time, so it's a bad idea to just edit our data.
+Instead, we could mimic the marking of nodes with a hash table to look up a node id and determine whether it's been visited.

@@ -1,0 +1,27 @@
+WEBCRAWLER
+If you were designing a web crawler, how would you avoid getting into infinite loops.
+
+How infinite loop might occur:
+If we picture the web as a graph of links, an infinite loop will occur when a cycle occurs.
+To prevent infinite loops, we just need to detect cycles. One way to do this is to create a hash table where we set hash[v] to true after we visit page v.
+
+We can crawl the web using BFS. Each time we visit a page, we gather all its links and insert them at the end of the queue. If we've already visited a page, we ignore it.
+
+Is page v defined based on its content or its URL?
+It's defined based on its URL, we must recognize that URL parameters might indicate a completely different page. But we can also append URL parameters to any URL without truly changing the page, provided it's not a parameter that the web application recognizes and handles.
+
+Can we define page based on content?
+One way to tackle this is to have some sort of estimate for degree of similarity. If based on the content and the URL, a page is deemed to be sufficiently similar to other pages, we deprioritize crawling its children.
+
+Steps:
+We have a database which stores a list of items we need to crawl. On each iteration, we select the highest priority page to crawl. We then do the following:
+1. Open the page and create a signature of the page based on specific subsection of the page and its URL.
+2. Query the db to see whether anything with this signature has been crawled recently.
+3. If something with this signature has been recently crawled, insert this page back into the database at a low priority.
+4. If not, crawl the page and insert its links into the database.
+
+Under the above implementation, we never "complete" crawling the web, but we will avoid getting stuck in a loop of pages. If we want to allow for the possibility of "finishing" crawling the web, then we can set a minimum priority that a page must have to be crawled.
+
+
+
+

@@ -1,0 +1,52 @@
+Pastebin
+Design a system like Pastebin, where a user can 
+enter a piece of text and get a randomly generated 
+URL for public access.
+
+Step 1: Scope the Problem
+- the system does not support user accounts or editing documents.
+- The system tracks analytics of how many times each page is accessed.
+- Old documents get deleted after not being accessed for a sufficiently long period of time.
+- While there isn't true authentication on accessing documents, users should not be able to "guess" document URL.
+- System has a frontend as well as an API.
+- The analytics for each URL can be accessed through a "stats" link on each page. Not shown by default though.
+
+Step 2: Make Reasonable Assumptions
+- The system gets heavy traffic and contains many millions of documents.
+- Traffic is not equally distributed across documents. Some documents get much more access than others.
+
+
+Step 3: Draw the Major Components
+Two options:
+- File  or - Database
+Since the documents can be large and it's unlikely we need searching capabilities, storing them on a file is probably the better choice.
+
+
+			|----------------- server with files
+			|
+	URL to File Database------ server with files
+			|
+			|----------------- server with files
+
+Here we have a simple database that looks up the location(server and path) of each file. When we have a request for a URL, we look up the location of the URL within the datastore and then access the file.
+Additionally, we will need a database that tracts analytics. We can do this with a simple datastore that adds each visit(timestamp, IP address, and location) as a row in a database. When we need to access the stats, we pull the relevant data in from this database.
+
+Step 4: Identify the Key Issues
+ The first issue that comes in mind is that some documents will be accessed much more frequently than others. Reading data from the filesystem is relatively slow compared to reading data in memory. Therefore, we probably want to use a cache to store the most recently accessed documents. Since documents cannot be edited, we will not need to worry about invalidaitng this cache.
+
+ - Shard the database: using some mapping from the URL (eg: the URL's hash code modulo some integer), which will allow us to quickly locate the database which contains this file.
+
+ Generating URLs
+ - One simple path is to generate a random GUID. This is a 128-bit-value that, while not strictly guaranteed to be unique, has low enough odds of a collision that we can treat it as unique. 
+ 	We could just generate a 10-character sequence of letters and numbers, which gives 36^10 possible strings.
+ - Assuming that we aren't okay with periodic data loss, we'll need to handle these collisions. We can either check the datastore to see if the URL exists yet or if the URL maps to a specific server.
+ - When collision occurs, we can just create a new URL. 
+
+Analytics:
+We have two options here:
+- Store the raw data from each visit.
+- Store just the data we know we'll use.
+
+We can just store a log of each visit in a file, and back this up to other servers.
+The log files are not designed to be used frequently. We will want to also store this precomputed data in a datastore. As the stats are not listed on regular pages and would generally be of less interest, it should not face as heavy of a load.
+

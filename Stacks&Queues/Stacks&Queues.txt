@@ -1,0 +1,112 @@
+STACKS:
+	- LIFO 
+	- Operations:
+  		> push(item) and pop()
+  		> peek() - return the top of the stack
+  		> isEmpty() - true iff stack is empty.
+
+	- Constant time adds and removes (as it doesnot require shifting of elements) 
+	- but does not offer constant time access to ith element. 
+
+Use:
+- used in certain recursive algorithms. Sometimes you need to push temporary data onto a stack as you recurse, but then remove them as you backtrack (eg: when recursive check failed)
+
+- stack can be used to implement recursive algorithm iteratively.
+
+public class MyStack<T> {
+	public static class StackNode<T> {
+		private T data;
+		private StackNode<T> next;
+
+		public StackNode(T data){
+			this.data = data;
+		}
+	}
+
+	private StackNode<T> top;
+
+	public T pop() {
+		if (top == null) throw new EmpthStackException();
+		T item = top.data;
+		top = top.next;
+		return item;
+	}
+
+	public void push(T item){
+		StackNode<T> t = new StackNode<T>(item);
+		t.next = top;
+		top = t;
+	}
+
+	public T peek(){
+		if (top==null) throw new EmptyStackException();
+		return top.data;
+	}
+
+	public boolean isEmpty(){
+		return top==null;
+	}
+}
+
+
+
+QUEUE:
+	- FIFO
+	- Operations:
+	  > add(item): add item to the end of the list.
+	  > remove(): remove the first element.
+	  > peek(): return top of the queue
+	  > isEmpty(): true if queue is empty.
+
+Use:
+- queues are often used in breadth-first search or in implementing a cache.
+
+In BFS:
+- we store a list of nodes that we need to process in a queue. Each time we process a node, we add its adjacent nodes to the back of the queue. This allows to process the nodes in the order.
+
+public class MyQueue<T> {
+	public static class QueueNode<T> {
+		private T data;
+		private QueueNode<T> next;
+
+		public QueueNode(T data){
+			this.data = data;
+		}
+	}
+
+	private QueueNode<T> first;
+	private QueueNode<T> last;
+
+	// adds to the end of the queue.
+	public void add(T item){
+		QueueNode<T> t = new QueueNode<T>(item);
+		if(last!=null){
+			last.next = t;
+		}
+		last=t;
+		if (first==null){
+			first = last;
+		}
+	}
+
+
+	// removes the first element.
+	public T remove() {
+		if (first==null) throw NoSuchElementException();
+		T data = first.data;
+		first = first.next;
+		if(first==null){
+			last=null;
+		}
+		return data;
+	}
+
+	public T peek(){
+		if(first ==null) return NoSuchElementException();
+		return first.data;
+	}
+
+	public boolean isEmpty(){
+		return first==null;
+	}
+} 
